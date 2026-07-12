@@ -286,6 +286,22 @@ app.get('/api/jobs/:id/stream', (req, res) => {
   });
 });
 
+// Global error handler: return JSON (not an HTML stack trace with absolute
+// paths) for Multer upload-limit errors and anything else that reaches here.
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  if (err instanceof multer.MulterError) {
+    const msg = err.code === 'LIMIT_FILE_SIZE'
+      ? 'File too large (max 2 GB per file).'
+      : err.code === 'LIMIT_FILE_COUNT'
+        ? 'Too many files at once (max 30).'
+        : `Upload error: ${err.message}`;
+    return res.status(413).json({ error: msg });
+  }
+  console.error('Unhandled server error:', err?.message || err);
+  res.status(500).json({ error: 'Internal server error.' });
+});
+
 const PORT = process.env.PORT || 4173;
 // Bind on all interfaces so the app is reachable when run in a container.
 app.listen(PORT, '0.0.0.0', () => {

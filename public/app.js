@@ -172,7 +172,9 @@ async function uploadFiles(fileList) {
   for (const f of fileList) form.append('files', f);
   try {
     const res = await fetch('/api/upload', { method: 'POST', body: form });
-    const { added = [], rejected = [] } = await res.json();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `upload failed (${res.status})`);
+    const { added = [], rejected = [] } = data;
     state.files.push(...added);
     renderFiles();
     const parts = [];
