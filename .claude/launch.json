@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "lazyclips",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server.js"],
+      "port": 4173
+    },
+    {
+      "name": "lazyclips-alt",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["-e", "process.env.PORT='4517'; import('./server.js')"],
+      "port": 4517
+    }
+  ]
+}

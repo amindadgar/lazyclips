@@ -1,0 +1,20 @@
+{
+  "name": "lazyclips",
+  "version": "1.0.0",
+  "description": "Drop your event footage, get commercial-ready clips for Instagram/LinkedIn. AI analyzes, scores, plans — FFmpeg renders. BYO Claude app, Claude API, or any OpenAI-compatible model.",
+  "type": "module",
+  "main": "server.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.90.0",
+    "express": "^4.21.2",
+    "multer": "^2.0.2"
+  }
+}

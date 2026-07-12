@@ -1,0 +1,16 @@
+# dependencies
+node_modules/
+
+# runtime data: uploads, rendered outputs, thumbnails, scratch, file registry
+data/
+
+# secrets & local machine config (never commit keys)
+.env
+.env.*
+*.local
+.claude/settings.local.json
+
+# logs & OS cruft
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LazyClips — event footage in, commercials out</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>" />
+</head>
+<body>
+  <button id="settings-btn" class="gear" title="Settings (model & API key)">⚙️</button>
+
+  <header class="hero">
+    <h1>🎬 LazyClips</h1>
+    <p class="tagline">Drop your event footage. Claude picks the best moments. FFmpeg cuts the commercial.<br/>
+    You do <em>nothing</em>.</p>
+    <div id="ffmpeg-warning" class="banner warn hidden">⚠️ ffmpeg not found — run <code>brew install ffmpeg</code> and restart the server.</div>
+  </header>
+
+  <!-- Settings modal (gear) -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>⚙️ Settings</h3>
+        <button id="settings-close" class="btn small" type="button">✕</button>
+      </div>
+      <div id="conn-status" class="conn-status"></div>
+
+      <label class="field">
+        <span>AI provider <span class="hint">(bring your own — nothing leaves your machine but the API call)</span></span>
+        <select id="provider-type">
+          <option value="auto">Claude app (default — no key needed)</option>
+          <option value="anthropic">Claude API key (BYOK)</option>
+          <option value="openai">OpenAI-compatible (ChatGPT / any /v1 URL)</option>
+        </select>
+      </label>
+
+      <!-- Claude fields (auto + anthropic) -->
+      <div id="fields-claude">
+        <label class="field">
+          <span>Model</span>
+          <select id="model"></select>
+        </label>
+        <label class="field">
+          <span>Claude API key <span class="hint" id="claude-key-hint"></span></span>
+          <input id="api-key" type="password" placeholder="sk-ant-…  (stored only in this browser)" autocomplete="off" />
+        </label>
+      </div>
+
+      <!-- OpenAI-compatible fields -->
+      <div id="fields-openai" class="hidden">
+        <label class="field">
+          <span>Base URL</span>
+          <input id="openai-base" type="text" placeholder="https://api.openai.com/v1" autocomplete="off" />
+        </label>
+        <label class="field">
+          <span>Model <span class="hint">(use a vision-capable model, e.g. gpt-4o)</span></span>
+          <input id="openai-model" type="text" placeholder="gpt-4o" autocomplete="off" />
+        </label>
+        <label class="field">
+          <span>API key</span>
+          <input id="openai-key" type="password" placeholder="sk-…  (stored only in this browser)" autocomplete="off" />
+        </label>
+        <p class="hint">Works with OpenAI, OpenRouter, Together, Groq, LM Studio, Ollama, vLLM — anything that speaks the OpenAI <code>/v1/chat/completions</code> format. Pick a model that can see images.</p>
+      </div>
+
+      <div class="key-row">
+        <button id="test-key" class="btn small" type="button">Test connection</button>
+        <span id="key-status" class="key-status"></span>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <!-- 1 ── FOOTAGE ------------------------------------------------- -->
+    <section class="card">
+      <h2><span class="step-num">1</span> Your footage</h2>
+      <div id="dropzone" class="dropzone">
+        <div class="dz-inner">
+          <div class="dz-icon">📥</div>
+          <p><strong>Drop videos &amp; photos here</strong> — or click to browse</p>
+          <p class="hint">mp4, mov, webm, jpg, png, heic… drop an mp3/m4a as the music bed, or a transcript (.txt/.srt/.vtt) for context</p>
+        </div>
+        <input id="file-input" type="file" multiple
+               accept="video/*,image/*,audio/*,text/*,.mov,.mp4,.m4v,.webm,.mkv,.heic,.mp3,.m4a,.wav,.txt,.md,.srt,.vtt" />
+      </div>
+      <div id="upload-status" class="upload-status hidden"></div>
+      <div id="file-grid" class="file-grid"></div>
+      <div id="context-row" class="context-row hidden"></div>
+      <div id="music-row" class="music-row hidden"></div>
+    </section>
+
+    <!-- 2 ── STYLE ---------------------------------------------------- -->
+    <section class="card">
+      <h2><span class="step-num">2</span> Style <span class="hint">(defaults are fine — you're lazy, remember?)</span></h2>
+      <div class="settings-grid">
+        <label class="field">
+          <span>Clip length</span>
+          <select id="duration">
+            <option value="15">~15s (teaser)</option>
+            <option value="30" selected>~30s (classic reel)</option>
+            <option value="45">~45s</option>
+            <option value="60">~60s (recap)</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Vibe</span>
+          <select id="vibe">
+            <option>Energetic</option>
+            <option>Elegant</option>
+            <option>Corporate</option>
+            <option>Fun &amp; playful</option>
+            <option>Cinematic</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Event title <span class="hint">(optional)</span></span>
+          <input id="event-title" type="text" placeholder="e.g. DevConf Kyiv 2026" maxlength="80" />
+        </label>
+        <div class="field">
+          <span>Formats</span>
+          <div id="preset-checks" class="preset-checks"></div>
+        </div>
+        <label class="field brief-field">
+          <span>Creative brief / prompt <span class="hint">(optional — steer the whole edit)</span></span>
+          <textarea id="brief" rows="2" maxlength="600"
+            placeholder="e.g. Focus on the keynote and the crowd energy. Make it feel like a hype recap for LinkedIn."></textarea>
+        </label>
+      </div>
+    </section>
+
+    <!-- 3 ── GO ------------------------------------------------------ -->
+    <section class="go-section">
+      <button id="generate" class="btn go">✨ Make my clips</button>
+      <p id="go-hint" class="hint center"></p>
+      <p id="conn-chip" class="hint center"></p>
+    </section>
+
+    <!-- 4 ── PIPELINE ------------------------------------------------ -->
+    <section id="pipeline-card" class="card hidden">
+      <h2><span class="step-num">3</span> Pipeline</h2>
+      <div id="pipeline" class="pipeline"></div>
+      <div id="plan-view" class="plan-view hidden"></div>
+      <div id="log" class="log"></div>
+    </section>
+
+    <!-- 5 ── RESULTS ------------------------------------------------- -->
+    <section id="results-card" class="card hidden">
+      <h2><span class="step-num">4</span> Your clips 🎉</h2>
+      <div id="music-suggestion" class="music-suggestion hidden"></div>
+      <div id="results" class="results"></div>
+      <p class="hint">Tip: rerun with a different vibe, brief, or length — the analysis is fast, only the plan &amp; render change.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Runs 100% on your machine. Analysis goes through your logged-in Claude app (or your API key if you set one in ⚙️). Rendering is local FFmpeg — free.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
