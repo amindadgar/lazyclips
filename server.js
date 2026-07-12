@@ -287,6 +287,7 @@ app.get('/api/jobs/:id/stream', (req, res) => {
 });
 
 const PORT = process.env.PORT || 4173;
-app.listen(PORT, () => {
+// Bind on all interfaces so the app is reachable when run in a container.
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🎬 LazyClips running at http://localhost:${PORT}`);
 });

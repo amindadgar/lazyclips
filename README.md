@@ -55,6 +55,30 @@ npm start
 # open http://localhost:4173
 ```
 
+### Run with Docker
+
+The image bundles FFmpeg, so you don't need it installed on the host.
+
+```bash
+docker compose up --build
+# open http://localhost:4173
+```
+
+or with plain Docker:
+
+```bash
+docker build -t lazyclips .
+docker run -p 4173:4173 -v lazyclips-data:/app/data lazyclips
+```
+
+The container has **no `claude` CLI**, so pick a key-based provider — open **⚙️ Settings** and add a Claude API key or an OpenAI-compatible endpoint, or pass a key at launch so it's already connected:
+
+```bash
+docker run -p 4173:4173 -e ANTHROPIC_API_KEY=sk-ant-... -v lazyclips-data:/app/data lazyclips
+```
+
+Rendered clips are downloaded through the web UI, so you don't need host access to the data volume. Using a **local model server** on the same machine (Ollama, LM Studio)? From inside the container, reach it at `http://host.docker.internal:11434/v1` (not `localhost`).
+
 ## How to use (lazy mode)
 
 1. Drop videos/photos onto the page. Optionally drop an mp3/m4a as the music bed, or a transcript (`.txt`/`.srt`/`.vtt`) for context.
@@ -87,7 +111,18 @@ Hit **Test connection** to verify before running. **All keys are stored only in 
 | Formats | Reel + Landscape | Square 1:1 also available |
 | Music | none | uploaded audio replaces original sound (fade in/out); optionally mixed under it |
 
-## Privacy & cost
+## Why it runs locally (not serverless)
+
+LazyClips is a **stateful, long-running server**, not a request/response function — so it belongs on your machine, a VM, or this Docker container, and **won't run on serverless hosts like Vercel or Lambda**. Concretely, it:
+
+- **shells out to FFmpeg** to probe, sample frames, and render — a native binary, minutes of CPU per job;
+- **writes big files to disk** (multi-GB uploads, render scratch, output clips) and reads them back on later requests;
+- **runs renders in the background** and streams progress over a long-lived **SSE** connection held open for the whole job;
+- **keeps job state in memory** across many requests.
+
+Serverless breaks every one of those: tiny request-body caps (≈4.5 MB — you couldn't even upload a video), an ephemeral per-request filesystem that isn't shared between invocations, short function timeouts, and no persistent background work. A container or VM (**Docker, Railway, Render, Fly.io, a VPS**) runs it exactly as it runs on your laptop.
+
+Running local is also the point, privacy-wise:
 
 - **Local & free** except the model call: FFmpeg rendering, framing, and file handling never leave your machine.
 - Only downscaled sampled frames go to the model, using **your** key/subscription.

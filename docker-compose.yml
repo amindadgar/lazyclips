@@ -1,0 +1,19 @@
+services:
+  lazyclips:
+    build: .
+    image: lazyclips
+    ports:
+      - "4173:4173"
+    volumes:
+      # Persist uploads, rendered clips, and the file registry across restarts.
+      - lazyclips-data:/app/data
+    environment:
+      # Optional: bring your key so you don't have to paste it in ⚙️ Settings.
+      # The container has no `claude` CLI, so use a key (Anthropic or any
+      # OpenAI-compatible endpoint via the Settings gear).
+      # - ANTHROPIC_API_KEY=sk-ant-...
+      - PORT=4173
+    restart: unless-stopped
+
+volumes:
+  lazyclips-data:

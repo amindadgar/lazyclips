@@ -1,0 +1,11 @@
+# Keep the build context small and free of local state / secrets.
+node_modules
+data
+.git
+.gitignore
+*.log
+.DS_Store
+.claude
+Dockerfile
+.dockerignore
+README.md
