@@ -37,6 +37,7 @@ Only small sampled frames (≤768px JPEGs) are sent to the model, so analysis co
 - **Per-clip effects** — each clip gets its own transition, color look (`vivid`, `warm`, `cool`, `bw`, `dreamy`, `retro`, `punch`, …), and camera motion (`zoom_in/out`, `pan_left/right/up`). Back-to-back repeats are actively avoided so the montage feels dynamic.
 - **Music recommendation** — suggests a royalty-free track (mood / genre / BPM / energy) with one-click search links to free libraries (Pixabay, YouTube Audio Library, Uppbeat, Free Music Archive, Chosic). Drop the track you like back in as the music bed.
 - **Kinetic text** — titles and captions animate (slide-up, slide-in, float) with rich looks (gradient fill, outline, lower-third bar), rendered crisply in your browser — not flat overlays.
+- **Your logo** — add a logo (PNG with a transparent background works best) and toggle an **intro card**, an **outro card**, and/or a **corner watermark** shown throughout. Pick the watermark corner.
 
 ## Requirements
 
@@ -110,6 +111,7 @@ Hit **Test connection** to verify before running. **All keys are stored only in 
 | Creative brief | — | free-text prompt that steers the whole edit |
 | Formats | Reel + Landscape | Square 1:1 also available |
 | Music | none | uploaded audio replaces original sound (fade in/out); optionally mixed under it |
+| Logo | none | intro card, outro card, and/or corner watermark from an uploaded logo (transparent PNG recommended) |
 
 ## Why it runs locally (not serverless)
 

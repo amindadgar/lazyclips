@@ -127,6 +127,36 @@
             placeholder="e.g. Focus on the keynote and the crowd energy. Make it feel like a hype recap for LinkedIn."></textarea>
         </label>
       </div>
+
+      <!-- Branding / logo -->
+      <div class="branding">
+        <div class="branding-head">
+          <span>🏷️ Logo <span class="hint">(optional — PNG with a transparent background works best)</span></span>
+        </div>
+        <div class="branding-body">
+          <div id="logo-slot" class="logo-slot">
+            <button id="logo-add" class="btn small" type="button">＋ Add logo</button>
+            <input id="logo-input" type="file" accept="image/*,.png,.jpg,.jpeg,.webp,.svg" hidden />
+            <div id="logo-preview" class="logo-preview hidden">
+              <img id="logo-img" alt="logo" />
+              <button id="logo-remove" class="remove" title="Remove logo" type="button">✕</button>
+            </div>
+          </div>
+          <div id="logo-options" class="logo-options hidden">
+            <label><input type="checkbox" id="logo-intro" checked /> Intro card</label>
+            <label><input type="checkbox" id="logo-outro" checked /> Outro card</label>
+            <label><input type="checkbox" id="logo-watermark" /> Watermark</label>
+            <label class="wm-corner">Corner
+              <select id="watermark-corner">
+                <option value="tr" selected>top-right</option>
+                <option value="tl">top-left</option>
+                <option value="br">bottom-right</option>
+                <option value="bl">bottom-left</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- 3 ── GO ------------------------------------------------------ -->

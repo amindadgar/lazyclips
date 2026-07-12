@@ -3,6 +3,7 @@ const $ = (sel) => document.querySelector(sel);
 
 const state = {
   files: [],
+  logo: null,
   musicId: undefined, // undefined = unset (auto-pick), null = explicitly "no music"
   keepOriginalAudio: false,
   job: null,
@@ -45,9 +46,11 @@ async function boot() {
   applyProviderMode();
   updateConnectionStatus();
 
-  const { files } = await fetch('/api/files').then((r) => r.json());
-  state.files = files;
+  const filesResp = await fetch('/api/files').then((r) => r.json());
+  state.files = filesResp.files;
+  state.logo = filesResp.logo || null;
   renderFiles();
+  renderLogo();
   updateGoHint();
 
   // Reconnect to a job that was running when the page was closed/reloaded.
@@ -269,6 +272,41 @@ async function removeFile(id) {
   updateGoHint();
 }
 
+// ---------- logo / branding ----------
+$('#logo-add').addEventListener('click', () => $('#logo-input').click());
+$('#logo-input').addEventListener('change', async () => {
+  const file = $('#logo-input').files[0];
+  $('#logo-input').value = '';
+  if (!file) return;
+  const form = new FormData();
+  form.append('logo', file);
+  $('#logo-add').textContent = 'Uploading…';
+  try {
+    const res = await fetch('/api/logo', { method: 'POST', body: form });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `logo upload failed (${res.status})`);
+    state.logo = data.logo;
+    renderLogo();
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    $('#logo-add').textContent = '＋ Add logo';
+  }
+});
+$('#logo-remove').addEventListener('click', async () => {
+  await fetch('/api/logo', { method: 'DELETE' }).catch(() => {});
+  state.logo = null;
+  renderLogo();
+});
+
+function renderLogo() {
+  const has = Boolean(state.logo);
+  $('#logo-add').classList.toggle('hidden', has);
+  $('#logo-preview').classList.toggle('hidden', !has);
+  $('#logo-options').classList.toggle('hidden', !has);
+  if (has) $('#logo-img').src = state.logo.thumb || '';
+}
+
 // ---------- key handling ----------
 function setKeyStatus(msg, cls = '') {
   const el = $('#key-status');
@@ -338,6 +376,10 @@ $('#generate').addEventListener('click', async () => {
         presets: presets.length ? presets : ['reel'],
         musicId: state.musicId,
         keepOriginalAudio: state.keepOriginalAudio,
+        logoIntro: state.logo ? $('#logo-intro').checked : false,
+        logoOutro: state.logo ? $('#logo-outro').checked : false,
+        logoWatermark: state.logo ? $('#logo-watermark').checked : false,
+        watermarkCorner: $('#watermark-corner').value,
       }),
     });
     const data = await res.json();

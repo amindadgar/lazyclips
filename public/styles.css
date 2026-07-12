@@ -176,6 +176,32 @@ main { max-width: 980px; margin: 0 auto; padding: 0 20px 60px; }
 .key-status.ok { color: var(--good); }
 .key-status.bad { color: var(--bad); }
 
+/* Branding / logo */
+.branding { margin-top: 18px; border-top: 1px solid var(--border); padding-top: 16px; }
+.branding-head { font-size: .88rem; color: var(--text-dim); margin-bottom: 12px; }
+.branding-body { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.logo-slot { display: flex; align-items: center; }
+.logo-preview {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 96px; height: 72px; border: 1px solid var(--border); border-radius: 10px;
+  background:
+    linear-gradient(45deg, #1a1d28 25%, transparent 25%, transparent 75%, #1a1d28 75%, #1a1d28) 0 0/16px 16px,
+    linear-gradient(45deg, #1a1d28 25%, #0f1119 25%, #0f1119 75%, #1a1d28 75%, #1a1d28) 8px 8px/16px 16px;
+}
+.logo-preview img { max-width: 88%; max-height: 88%; object-fit: contain; }
+.logo-preview .remove {
+  position: absolute; top: -8px; right: -8px;
+  background: rgba(0,0,0,.75); border: 1px solid var(--border); color: #fff;
+  width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: .75rem;
+}
+.logo-preview .remove:hover { background: var(--bad); }
+.logo-options { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; font-size: .85rem; color: var(--text-dim); }
+.logo-options label { display: flex; align-items: center; gap: 6px; }
+.logo-options .wm-corner select {
+  background: var(--bg-inset); border: 1px solid var(--border); color: var(--text);
+  border-radius: 6px; padding: 4px 8px; font-size: .82rem; margin-left: 4px;
+}
+
 .preset-checks { display: flex; gap: 10px; flex-wrap: wrap; }
 .preset-checks label {
   display: flex; align-items: center; gap: 6px;

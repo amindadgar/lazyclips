@@ -101,7 +101,54 @@ function readProvider(body = {}) {
 }
 
 app.get('/api/files', (req, res) => {
-  res.json({ files: registry.map(publicFile) });
+  const logo = registry.find((f) => f.kind === 'logo');
+  res.json({
+    files: registry.filter((f) => f.kind !== 'logo').map(publicFile),
+    logo: logo ? publicFile(logo) : null,
+  });
+});
+
+// Brand logo — a single image (replaces any previous one). Used for the
+// intro/outro cards and the optional corner watermark.
+app.post('/api/logo', upload.single('logo'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No logo file received.' });
+  if (detectKind(req.file.originalname) !== 'image') {
+    fs.rmSync(req.file.path, { force: true });
+    return res.status(400).json({ error: 'Logo must be an image (PNG with a transparent background works best).' });
+  }
+  try {
+    const id = path.basename(req.file.filename).split('-')[0];
+    // Remove any previous logo (file + thumb + registry entry).
+    for (const old of registry.filter((f) => f.kind === 'logo')) {
+      fs.rmSync(old.path, { force: true });
+      if (old.thumb) fs.rmSync(old.thumb, { force: true });
+    }
+    registry = registry.filter((f) => f.kind !== 'logo');
+    const thumb = path.join(THUMBS, `${id}.jpg`);
+    await makeThumbnail(req.file.path, 'image', thumb);
+    const entry = {
+      id, originalName: req.file.originalname, kind: 'logo', path: req.file.path, thumb,
+      meta: { duration: 0, width: null, height: null, hasAudio: false, size: req.file.size },
+      addedAt: Date.now(),
+    };
+    registry.push(entry);
+    saveRegistry();
+    res.json({ logo: publicFile(entry) });
+  } catch (err) {
+    fs.rmSync(req.file.path, { force: true });
+    res.status(400).json({ error: `Could not process logo: ${err.message}` });
+  }
+});
+
+app.delete('/api/logo', (req, res) => {
+  const logos = registry.filter((f) => f.kind === 'logo');
+  for (const l of logos) {
+    fs.rmSync(l.path, { force: true });
+    if (l.thumb) fs.rmSync(l.thumb, { force: true });
+  }
+  registry = registry.filter((f) => f.kind !== 'logo');
+  saveRegistry();
+  res.json({ ok: true });
 });
 
 app.post('/api/upload', upload.array('files', 30), async (req, res) => {
@@ -206,6 +253,10 @@ app.post('/api/generate', async (req, res) => {
     keepOriginalAudio = false,
     fileIds = null,
     brief = '',
+    logoIntro = false,
+    logoOutro = false,
+    logoWatermark = false,
+    watermarkCorner = 'tr',
   } = req.body || {};
   const provider = readProvider(req.body);
 
@@ -232,6 +283,19 @@ app.post('/api/generate', async (req, res) => {
     ? provider.model
     : (MODELS.some((m) => m.id === provider.model) ? provider.model : '');
 
+  // Branding: resolve the stored logo if any logo option is on.
+  const logoEntry = registry.find((f) => f.kind === 'logo');
+  const wantsLogo = Boolean(logoIntro || logoOutro || logoWatermark);
+  const logo = logoEntry && wantsLogo
+    ? {
+        path: logoEntry.path,
+        intro: Boolean(logoIntro),
+        outro: Boolean(logoOutro),
+        watermark: Boolean(logoWatermark),
+        corner: ['tl', 'tr', 'bl', 'br'].includes(watermarkCorner) ? watermarkCorner : 'tr',
+      }
+    : null;
+
   const job = createJob({
     files: selected,
     options: {
@@ -243,6 +307,7 @@ app.post('/api/generate', async (req, res) => {
       musicId,
       keepOriginalAudio,
       brief: String(brief).slice(0, 600),
+      logo,
     },
     dirs: { workRoot: WORK, outputsDir: OUTPUTS, appRoot: __dirname },
   });
